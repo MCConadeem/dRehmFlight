@@ -31,8 +31,8 @@ Everyone that sends me pictures and videos of your flying creations! -Nick
 //========================================================================================================================//
 
 //Uncomment only one receiver type
-#define USE_PWM_RX
-//#define USE_PPM_RX
+//#define USE_PWM_RX
+#define USE_PPM_RX
 //#define USE_SBUS_RX
 //#define USE_DSM_RX
 static const uint8_t num_DSM_channels = 6; //If using DSM RX, change this to match the number of transmitter channels you have
@@ -207,16 +207,16 @@ float Kd_yaw = 0.00015;       //Yaw D-gain (be careful when increasing too high,
 //                                                     DECLARE PINS                                                       //                           
 //========================================================================================================================//                                          
 
-//NOTE: Pin 13 is reserved for onboard LED, pins 18 and 19 are reserved for the MPU6050 IMU for default setup
+//NOTE: Pin 13 is reserved for onboard LED, pins 18 and 19 are rese rved for the MPU6050 IMU for default setup
 //Radio:
 //Note: If using SBUS, connect to pin 21 (RX5), if using DSM, connect to pin 15 (RX3)
 const int ch1Pin = 15; //throttle
 const int ch2Pin = 16; //ail
-const int ch3Pin = 17; //ele
+const int ch3Pin = 22; //ele
 const int ch4Pin = 20; //rudd
-const int ch5Pin = 21; //gear (throttle cut)
-const int ch6Pin = 22; //aux1 (free aux channel)
-const int PPM_Pin = 23;
+const int ch5Pin = 23; //gear (throttle cut)
+const int ch6Pin = 21; //aux1 (free aux channel)
+const int PPM_Pin = 15;
 //OneShot125 ESC pin outputs:
 const int m1Pin = 0;
 const int m2Pin = 1;
@@ -297,6 +297,7 @@ float m1_command_scaled, m2_command_scaled, m3_command_scaled, m4_command_scaled
 int m1_command_PWM, m2_command_PWM, m3_command_PWM, m4_command_PWM, m5_command_PWM, m6_command_PWM;
 float s1_command_scaled, s2_command_scaled, s3_command_scaled, s4_command_scaled, s5_command_scaled, s6_command_scaled, s7_command_scaled;
 int s1_command_PWM, s2_command_PWM, s3_command_PWM, s4_command_PWM, s5_command_PWM, s6_command_PWM, s7_command_PWM;
+float tilt_passthru;
 
 
 
@@ -467,22 +468,15 @@ void controlMixer() {
    *channel_6_pwm - free auxillary channel, can be used to toggle things with an 'if' statement
    */
    
-  //Quad mixing - EXAMPLE
-  m1_command_scaled = thro_des - pitch_PID + roll_PID + yaw_PID; //Front Left
-  m2_command_scaled = thro_des - pitch_PID - roll_PID - yaw_PID; //Front Right
-  m3_command_scaled = thro_des + pitch_PID - roll_PID + yaw_PID; //Back Right
-  m4_command_scaled = thro_des + pitch_PID + roll_PID - yaw_PID; //Back Left
-  m5_command_scaled = 0;
-  m6_command_scaled = 0;
+  // VTOL Mixing
+  m1_command_scaled = thro_des + tilt_passthru*roll_PID - (1-tilt_passthru)*yaw_PID; // + (1-tilt_passthru)*roll_PID*0.2;
+  m2_command_scaled = thro_des - tilt_passthru*roll_PID + (1-tilt_passthru)*yaw_PID; // - (1-tilt_passthru)*roll_PID*0.2:
 
   //0.5 is centered servo, 0.0 is zero throttle if connecting to ESC for conventional PWM, 1.0 is max throttle
-  s1_command_scaled = 0;
-  s2_command_scaled = 0;
-  s3_command_scaled = 0;
-  s4_command_scaled = 0;
-  s5_command_scaled = 0;
-  s6_command_scaled = 0;
-  s7_command_scaled = 0;
+  s1_command_scaled = (tilt_passthru*0.5) + 0.33 - tilt_passthru*pitch_PID + tilt_passthru*yaw_PID + (1-tilt_passthru)*roll_PID*4;
+  s2_command_scaled = 1-(tilt_passthru*0.5) + 0.25 - tilt_passthru*pitch_PID - tilt_passthru*yaw_PID + (1-tilt_passthru)*roll_PID*4;
+  s3_command_scaled = 0.37 + 3*pitch_PID;
+
  
 }
 
@@ -1329,7 +1323,6 @@ void calibrateESCs() {
     
       digitalWrite(13, HIGH); //LED on to indicate we are not in main loop
 
-      getCommands(); //Pulls current available radio commands
       failSafe(); //Prevent failures in event of bad receiver connection, defaults to failsafe values assigned in setup
       getDesState(); //Convert raw commands to normalized values based on saturated control limits
       getIMUdata(); //Pulls raw gyro, accelerometer, and magnetometer data from IMU and LP filters to remove noise
