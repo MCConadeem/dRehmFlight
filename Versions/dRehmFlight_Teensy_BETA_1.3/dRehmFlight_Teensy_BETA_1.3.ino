@@ -212,11 +212,11 @@ float Kd_yaw = 0.00015;       //Yaw D-gain (be careful when increasing too high,
 //Note: If using SBUS, connect to pin 21 (RX5), if using DSM, connect to pin 15 (RX3)
 const int ch1Pin = 15; //throttle
 const int ch2Pin = 16; //ail
-const int ch3Pin = 22; //ele
-const int ch4Pin = 20; //rudd
-const int ch5Pin = 23; //gear (throttle cut)
-const int ch6Pin = 21; //aux1 (free aux channel)
-const int PPM_Pin = 15;
+const int ch3Pin = 17; //ele
+const int ch4Pin = 20; //rudd9
+const int ch5Pin = 21; //gear (throttle cut)
+const int ch6Pin = 22; //aux1 (free aux channel)
+const int PPM_Pin = 23;
 //OneShot125 ESC pin outputs:
 const int m1Pin = 0;
 const int m2Pin = 1;
@@ -395,7 +395,7 @@ void loop() {
   loopBlink(); //Indicate we are in main loop with short blink every 1.5 seconds
 
   //Print data at 100hz (uncomment one at a time for troubleshooting) - SELECT ONE:
-  //printRadioData();     //Prints radio pwm values (expected: 1000 to 2000)
+  printRadioData();     //Prints radio pwm values (expected: 1000 to 2000)
   //printDesiredState();  //Prints desired vehicle state commanded in either degrees or deg/sec (expected: +/- maxAXIS for roll, pitch, yaw; 0 to 1 for throttle)
   //printGyroData();      //Prints filtered gyro data direct from IMU (expected: ~ -250 to 250, 0 at rest)
   //printAccelData();     //Prints filtered accelerometer data direct from IMU (expected: ~ -2 to 2; x,y 0 when level, z 1 when level)
@@ -469,13 +469,13 @@ void controlMixer() {
    */
    
   // VTOL Mixing
-  m1_command_scaled = thro_des + tilt_passthru*roll_PID - (1-tilt_passthru)*yaw_PID; // + (1-tilt_passthru)*roll_PID*0.2;
-  m2_command_scaled = thro_des - tilt_passthru*roll_PID + (1-tilt_passthru)*yaw_PID; // - (1-tilt_passthru)*roll_PID*0.2:
+  //m1_command_scaled = thro_des + tilt_passthru*roll_PID - (1-tilt_passthru)*yaw_PID; // + (1-tilt_passthru)*roll_PID*0.2;
+  //m2_command_scaled = thro_des - tilt_passthru*roll_PID + (1-tilt_passthru)*yaw_PID; // - (1-tilt_passthru)*roll_PID*0.2:
 
   //0.5 is centered servo, 0.0 is zero throttle if connecting to ESC for conventional PWM, 1.0 is max throttle
-  s1_command_scaled = (tilt_passthru*0.5) + 0.33 - tilt_passthru*pitch_PID + tilt_passthru*yaw_PID + (1-tilt_passthru)*roll_PID*4;
-  s2_command_scaled = 1-(tilt_passthru*0.5) + 0.25 - tilt_passthru*pitch_PID - tilt_passthru*yaw_PID + (1-tilt_passthru)*roll_PID*4;
-  s3_command_scaled = 0.37 + 3*pitch_PID;
+  //s1_command_scaled = (tilt_passthru*0.5) + 0.33 - tilt_passthru*pitch_PID + tilt_passthru*yaw_PID + (1-tilt_passthru)*roll_PID*4;
+  //s2_command_scaled = 1-(tilt_passthru*0.5) + 0.25 - tilt_passthru*pitch_PID - tilt_passthru*yaw_PID + (1-tilt_passthru)*roll_PID*4;
+  //s3_command_scaled = 0.37 + 3*pitch_PID;
 
  
 }
@@ -1149,9 +1149,9 @@ void getCommands() {
    */
 
   #if defined USE_PPM_RX || defined USE_PWM_RX
-    channel_1_pwm = getRadioPWM(1);
-    channel_2_pwm = getRadioPWM(2);
-    channel_3_pwm = getRadioPWM(3);
+    channel_1_pwm = getRadioPWM(3);
+    channel_2_pwm = getRadioPWM(1);
+    channel_3_pwm = getRadioPWM(2);
     channel_4_pwm = getRadioPWM(4);
     channel_5_pwm = getRadioPWM(5);
     channel_6_pwm = getRadioPWM(6);
