@@ -297,7 +297,7 @@ float m1_command_scaled, m2_command_scaled, m3_command_scaled, m4_command_scaled
 int m1_command_PWM, m2_command_PWM, m3_command_PWM, m4_command_PWM, m5_command_PWM, m6_command_PWM;
 float s1_command_scaled, s2_command_scaled, s3_command_scaled, s4_command_scaled, s5_command_scaled, s6_command_scaled, s7_command_scaled;
 int s1_command_PWM, s2_command_PWM, s3_command_PWM, s4_command_PWM, s5_command_PWM, s6_command_PWM, s7_command_PWM;
-float tilt_passthru;
+float servo_vertical = .5;// Defines where vertical is for the tiltrotor servos
 
 
 
@@ -467,17 +467,22 @@ void controlMixer() {
    *roll_passthru, pitch_passthru, yaw_passthru - direct unstabilized command passthrough
    *channel_6_pwm - free auxillary channel, can be used to toggle things with an 'if' statement
    */
-   
-  // VTOL Mixing
-  s7_command_scaled = thro_des + tilt_passthru*roll_PID - (1-tilt_passthru)*yaw_PID; // + (1-tilt_passthru)*roll_PID*0.2;
-  s6_command_scaled = thro_des - tilt_passthru*roll_PID + (1-tilt_passthru)*yaw_PID; // - (1-tilt_passthru)*roll_PID*0.2:
 
-  //0.5 is centered servo, 0.0 is zero throttle if connecting to ESC for conventional PWM, 1.0 is max throttle
-  s1_command_scaled = (tilt_passthru*0.5) + 0.33 - tilt_passthru*pitch_PID + tilt_passthru*yaw_PID + (1-tilt_passthru)*roll_PID*4;
-  s2_command_scaled = 1-(tilt_passthru*0.5) + 0.25 - tilt_passthru*pitch_PID - tilt_passthru*yaw_PID + (1-tilt_passthru)*roll_PID*4;
-  s3_command_scaled = 0.37 + 3*pitch_PID;
+// VTOL Mixing:
+  // Hover Mode:
+    // Tiltrotor Servos
+      s1_command_scaled = (servo_vertical) + yaw_PID - pitch_PID;          //left servo
+      s2_command_scaled = (1-servo_vertical) + yaw_PID + pitch_PID;      //right servo
+    // Elevator Servos
+      s3_command_scaled = 0;                            //left tail 
+      s4_command_scaled = 0;                              //right tail(currently unused) 
+    // Motors:
+      s6_command_scaled = thro_des + roll_PID;            //left motor
+      s7_command_scaled = thro_des - roll_PID;            //right motor
+  // Forward Flight:
 
  
+}
 }
 
 void IMUinit() {
